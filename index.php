@@ -1562,9 +1562,12 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                 formData.append('imageFile', imageFile);
             }
             
+            // Add debug parameter if needed (you can enable this for troubleshooting)
+            const url = 'process.php' + (window.location.search.includes('debug=1') ? '?debug=1' : '');
+            
             showLoading('Generating preview...');
             
-            fetch('process.php', {
+            fetch(url, {
                 method: 'POST',
                 body: formData
             })

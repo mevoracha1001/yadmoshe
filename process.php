@@ -11,20 +11,78 @@ error_reporting(E_ALL);
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 
+// Error log file
+$errorLogFile = __DIR__ . '/logs/php_errors.log';
+
+// Ensure log directory exists
+if (!file_exists(__DIR__ . '/logs/')) {
+    mkdir(__DIR__ . '/logs/', 0755, true);
+}
+
 // Simple error handler that always returns JSON
-function jsonError($message) {
-    echo json_encode(['success' => false, 'error' => $message]);
+function jsonError($message, $details = null) {
+    global $errorLogFile;
+    
+    // Log the error with details
+    $logEntry = date('Y-m-d H:i:s') . " - Error: " . $message;
+    if ($details) {
+        $logEntry .= " | Details: " . (is_string($details) ? $details : json_encode($details));
+    }
+    $logEntry .= "\n";
+    file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
+    
+    // Return JSON error (hide details in production, show in debug mode)
+    $showDetails = isset($_GET['debug']) || isset($_POST['debug']);
+    $errorMessage = $showDetails && $details ? $message . ' | ' . (is_string($details) ? $details : json_encode($details)) : $message;
+    
+    echo json_encode(['success' => false, 'error' => $errorMessage]);
     exit;
 }
 
 // Custom error handler
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
-    jsonError('Server error occurred');
+set_error_handler(function($errno, $errstr, $errfile, $errline) use ($errorLogFile) {
+    $errorTypes = [
+        E_ERROR => 'E_ERROR',
+        E_WARNING => 'E_WARNING',
+        E_PARSE => 'E_PARSE',
+        E_NOTICE => 'E_NOTICE',
+        E_CORE_ERROR => 'E_CORE_ERROR',
+        E_CORE_WARNING => 'E_CORE_WARNING',
+        E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+        E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+        E_USER_ERROR => 'E_USER_ERROR',
+        E_USER_WARNING => 'E_USER_WARNING',
+        E_USER_NOTICE => 'E_USER_NOTICE',
+        E_STRICT => 'E_STRICT',
+        E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+        E_DEPRECATED => 'E_DEPRECATED',
+        E_USER_DEPRECATED => 'E_USER_DEPRECATED'
+    ];
+    
+    $errorType = $errorTypes[$errno] ?? 'UNKNOWN';
+    $errorDetails = "$errorType: $errstr in $errfile on line $errline";
+    
+    // Log full error details
+    $logEntry = date('Y-m-d H:i:s') . " - PHP Error: $errorDetails\n";
+    file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
+    
+    // Only show generic message unless in debug mode
+    $showDetails = isset($_GET['debug']) || isset($_POST['debug']);
+    jsonError('Server error occurred', $showDetails ? $errorDetails : null);
 });
 
 // Custom exception handler
-set_exception_handler(function($exception) {
-    jsonError('Server error occurred');
+set_exception_handler(function($exception) use ($errorLogFile) {
+    $errorDetails = get_class($exception) . ': ' . $exception->getMessage() . ' in ' . $exception->getFile() . ' on line ' . $exception->getLine();
+    $errorDetails .= "\nStack trace:\n" . $exception->getTraceAsString();
+    
+    // Log full exception details
+    $logEntry = date('Y-m-d H:i:s') . " - Exception: $errorDetails\n";
+    file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
+    
+    // Only show generic message unless in debug mode
+    $showDetails = isset($_GET['debug']) || isset($_POST['debug']);
+    jsonError('Server error occurred', $showDetails ? $errorDetails : null);
 });
 
 // Load config only
@@ -96,7 +154,18 @@ function handlePreview() {
         
         // Check if file was uploaded
         if (!isset($_FILES['csvFile']) || $_FILES['csvFile']['error'] !== UPLOAD_ERR_OK) {
-            jsonError('Please select a CSV file to upload');
+            $uploadError = $_FILES['csvFile']['error'] ?? 'No file uploaded';
+            $errorMessages = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION => 'File upload stopped by extension'
+            ];
+            $errorMsg = $errorMessages[$uploadError] ?? "Upload error code: $uploadError";
+            jsonError('Please select a CSV file to upload', $errorMsg);
         }
         
         if (empty($messageTemplate)) {
@@ -108,24 +177,28 @@ function handlePreview() {
         
         // Validate file
         if (!file_exists($filePath) || !is_readable($filePath)) {
-            jsonError('Uploaded file is not accessible');
+            jsonError('Uploaded file is not accessible', "File path: $filePath");
         }
         
         // Check file size (max 10MB)
         if ($file['size'] > 10 * 1024 * 1024) {
-            jsonError('File is too large (max 10MB)');
+            jsonError('File is too large (max 10MB)', "File size: " . round($file['size'] / 1024 / 1024, 2) . " MB");
         }
         
         // Check file type
         $allowedTypes = ['text/csv', 'application/csv', 'application/vnd.ms-excel'];
         if (!in_array($file['type'], $allowedTypes) && !preg_match('/\.csv$/i', $file['name'])) {
-            jsonError('Please upload a valid CSV file');
+            jsonError('Please upload a valid CSV file', "File type: " . ($file['type'] ?? 'unknown'));
         }
         
         // Handle image upload if provided
         $imageUrl = null;
         if (isset($_FILES['imageFile']) && $_FILES['imageFile']['error'] === UPLOAD_ERR_OK) {
-            $imageUrl = handleImageUpload($_FILES['imageFile'], true); // true = preview mode
+            try {
+                $imageUrl = handleImageUpload($_FILES['imageFile'], true); // true = preview mode
+            } catch (Exception $e) {
+                jsonError('Error uploading image: ' . $e->getMessage());
+            }
         }
         
         // Read and parse CSV
@@ -146,7 +219,9 @@ function handlePreview() {
         ]);
         
     } catch (Exception $e) {
-        jsonError('Error processing preview: ' . $e->getMessage());
+        jsonError('Error processing preview: ' . $e->getMessage(), $e->getTraceAsString());
+    } catch (Error $e) {
+        jsonError('Fatal error processing preview: ' . $e->getMessage(), $e->getTraceAsString());
     }
 }
 
