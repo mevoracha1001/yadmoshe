@@ -14,20 +14,17 @@ header('Cache-Control: no-cache, must-revalidate');
 // Error log file - use config LOG_DIR if available, otherwise default
 $errorLogFile = defined('LOG_DIR') ? LOG_DIR . 'php_errors.log' : __DIR__ . '/logs/php_errors.log';
 
-// Ensure log directory exists and is writable
+// Ensure log directory exists
 $logDir = defined('LOG_DIR') ? LOG_DIR : __DIR__ . '/logs/';
 if (!file_exists($logDir)) {
     @mkdir($logDir, 0755, true);
 }
-// Try to create log file if it doesn't exist and make it writable
+// Try to create log file if it doesn't exist
 if (!file_exists($errorLogFile)) {
     @touch($errorLogFile);
-    @chmod($errorLogFile, 0666);
 }
-// Ensure file is writable (try to fix permissions)
-if (file_exists($errorLogFile) && !is_writable($errorLogFile)) {
-    @chmod($errorLogFile, 0666);
-}
+// Note: We don't chmod on shared hosting as it often fails due to permissions
+// The directory should be set up with proper permissions by the server admin
 
 // Simple error handler that always returns JSON
 function jsonError($message, $details = null) {
