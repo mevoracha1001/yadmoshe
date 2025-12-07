@@ -11,25 +11,35 @@ error_reporting(E_ALL);
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 
-// Error log file
-$errorLogFile = __DIR__ . '/logs/php_errors.log';
+// Error log file - use config LOG_DIR if available, otherwise default
+$errorLogFile = defined('LOG_DIR') ? LOG_DIR . 'php_errors.log' : __DIR__ . '/logs/php_errors.log';
 
-// Ensure log directory exists
-if (!file_exists(__DIR__ . '/logs/')) {
-    mkdir(__DIR__ . '/logs/', 0755, true);
+// Ensure log directory exists and is writable
+$logDir = defined('LOG_DIR') ? LOG_DIR : __DIR__ . '/logs/';
+if (!file_exists($logDir)) {
+    @mkdir($logDir, 0755, true);
+}
+// Try to create log file if it doesn't exist and make it writable
+if (!file_exists($errorLogFile)) {
+    @touch($errorLogFile);
+    @chmod($errorLogFile, 0666);
+}
+// Ensure file is writable (try to fix permissions)
+if (file_exists($errorLogFile) && !is_writable($errorLogFile)) {
+    @chmod($errorLogFile, 0666);
 }
 
 // Simple error handler that always returns JSON
 function jsonError($message, $details = null) {
     global $errorLogFile;
     
-    // Log the error with details
+    // Try to log the error with details (silently fail if permission denied)
     $logEntry = date('Y-m-d H:i:s') . " - Error: " . $message;
     if ($details) {
         $logEntry .= " | Details: " . (is_string($details) ? $details : json_encode($details));
     }
     $logEntry .= "\n";
-    file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
+    @file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
     
     // Return JSON error (hide details in production, show in debug mode)
     $showDetails = isset($_GET['debug']) || isset($_POST['debug']);
@@ -53,18 +63,24 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) use ($errorLogFi
         E_USER_ERROR => 'E_USER_ERROR',
         E_USER_WARNING => 'E_USER_WARNING',
         E_USER_NOTICE => 'E_USER_NOTICE',
-        E_STRICT => 'E_STRICT',
         E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
         E_DEPRECATED => 'E_DEPRECATED',
         E_USER_DEPRECATED => 'E_USER_DEPRECATED'
     ];
     
-    $errorType = $errorTypes[$errno] ?? 'UNKNOWN';
+    // E_STRICT is deprecated in PHP 8.0+, so we don't include it
+    // But handle it gracefully if it appears
+    if (defined('E_STRICT') && $errno === E_STRICT) {
+        $errorType = 'E_STRICT (deprecated)';
+    } else {
+        $errorType = $errorTypes[$errno] ?? 'UNKNOWN';
+    }
+    
     $errorDetails = "$errorType: $errstr in $errfile on line $errline";
     
-    // Log full error details
+    // Try to log full error details (silently fail if permission denied)
     $logEntry = date('Y-m-d H:i:s') . " - PHP Error: $errorDetails\n";
-    file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
+    @file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
     
     // Only show generic message unless in debug mode
     $showDetails = isset($_GET['debug']) || isset($_POST['debug']);
@@ -76,9 +92,9 @@ set_exception_handler(function($exception) use ($errorLogFile) {
     $errorDetails = get_class($exception) . ': ' . $exception->getMessage() . ' in ' . $exception->getFile() . ' on line ' . $exception->getLine();
     $errorDetails .= "\nStack trace:\n" . $exception->getTraceAsString();
     
-    // Log full exception details
+    // Try to log full exception details (silently fail if permission denied)
     $logEntry = date('Y-m-d H:i:s') . " - Exception: $errorDetails\n";
-    file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
+    @file_put_contents($errorLogFile, $logEntry, FILE_APPEND);
     
     // Only show generic message unless in debug mode
     $showDetails = isset($_GET['debug']) || isset($_POST['debug']);
