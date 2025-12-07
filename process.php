@@ -830,8 +830,27 @@ function sendBulkSMSWithProgress($contacts, $messageTemplate, $baseUrl, $fromNum
         'retryQueue' => []
     ];
     
+    // Ensure temp directory exists and is writable
+    if (!file_exists(TEMP_DIR)) {
+        @mkdir(TEMP_DIR, 0755, true);
+    }
+    if (!is_writable(TEMP_DIR)) {
+        // Try a test write
+        $testFile = TEMP_DIR . '.test_write_' . time();
+        $testWrite = @file_put_contents($testFile, 'test');
+        if ($testWrite === false) {
+            jsonError('Temp directory is not writable. Please set permissions on temp/ directory to 755. Current path: ' . TEMP_DIR);
+        }
+        @unlink($testFile); // Clean up test file
+    }
+    
     // Save initial progress
-    file_put_contents(TEMP_DIR . $processId . '.json', json_encode($progressData));
+    $tempFile = TEMP_DIR . $processId . '.json';
+    if (!@file_put_contents($tempFile, json_encode($progressData))) {
+        $error = error_get_last();
+        $errorMsg = $error ? $error['message'] : 'Failed to write temp file';
+        jsonError('Failed to save process data. Check temp directory permissions.', $errorMsg);
+    }
     
     // Set headers for streaming
     header('Content-Type: text/plain');
