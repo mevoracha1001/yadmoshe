@@ -144,12 +144,14 @@ function handleImageUpload($imageFile, $isPreview = false) {
         jsonError('Image file is too large. Maximum size is 5MB for MMS.');
     }
     
-    // Ensure images directory exists and is writable
+    // Ensure images directory exists
     if (!file_exists(IMAGES_DIR)) {
         @mkdir(IMAGES_DIR, 0755, true);
     }
+    
+    // Check if directory is writable (don't try to chmod on shared hosting)
     if (!is_writable(IMAGES_DIR)) {
-        @chmod(IMAGES_DIR, 0755);
+        jsonError('Images directory is not writable. Please contact your hosting provider to set permissions on uploads/images/ directory to 755.');
     }
     
     // Generate unique filename
@@ -162,9 +164,6 @@ function handleImageUpload($imageFile, $isPreview = false) {
         $errorMsg = $error ? $error['message'] : 'Unknown error';
         jsonError('Failed to upload image file. Check directory permissions.', $errorMsg);
     }
-    
-    // Ensure file is readable
-    @chmod($targetPath, 0644);
     
     // Generate public URL
     $baseUrl = BASE_URL;
