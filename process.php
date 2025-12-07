@@ -110,8 +110,19 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     jsonError('Not authenticated');
 }
 
-// Get action
+// Get action - check both POST and GET
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+// Debug: Log action if empty (only in debug mode)
+if (empty($action) && (isset($_GET['debug']) || isset($_POST['debug']))) {
+    $debugInfo = [
+        'POST' => $_POST,
+        'GET' => $_GET,
+        'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'] ?? 'not set',
+        'CONTENT_TYPE' => $_SERVER['CONTENT_TYPE'] ?? 'not set'
+    ];
+    jsonError('No action parameter received', $debugInfo);
+}
 
 if ($action === 'preview') {
     handlePreview();
@@ -122,7 +133,7 @@ if ($action === 'preview') {
 } elseif ($action === 'progress') {
     handleProgress();
 } else {
-    jsonError('Invalid action');
+    jsonError('Invalid action: ' . ($action ?: 'empty'));
 }
 
 function handleImageUpload($imageFile, $isPreview = false) {
