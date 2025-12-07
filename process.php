@@ -1,7 +1,11 @@
 <?php
-// CRITICAL: Prevent any HTML error output - this must be first
-ini_set('display_errors', 0);
-error_reporting(0);
+// Error reporting
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// CRITICAL: Note - This endpoint returns JSON, so errors should be handled via JSON error handler
+// The above settings will help with debugging, but the custom error handlers below will format errors as JSON
 
 // Set JSON header immediately
 header('Content-Type: application/json');

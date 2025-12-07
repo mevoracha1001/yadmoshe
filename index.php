@@ -1,4 +1,9 @@
 <?php
+// Error reporting
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Yad Moshe - Professional SMS Campaign Management System
 // Main application file
 
