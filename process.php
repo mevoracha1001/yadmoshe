@@ -141,14 +141,34 @@ function handleImageUpload($imageFile, $isPreview = false) {
         jsonError('Image file is too large. Maximum size is 5MB for MMS.');
     }
     
-    // Ensure images directory exists
+    // Ensure images directory exists - try to create it if it doesn't
     if (!file_exists(IMAGES_DIR)) {
-        @mkdir(IMAGES_DIR, 0755, true);
+        // Try to create the directory (including parent directories if needed)
+        if (!@mkdir(IMAGES_DIR, 0755, true)) {
+            // If creation fails, check if parent directory exists and is writable
+            $parentDir = dirname(IMAGES_DIR);
+            if (!file_exists($parentDir)) {
+                jsonError('Uploads directory does not exist. Please create uploads/images/ directory with 755 permissions.');
+            }
+            if (!is_writable($parentDir)) {
+                jsonError('Parent uploads directory is not writable. Please set permissions on uploads/ directory to 755.');
+            }
+            jsonError('Failed to create images directory. Please manually create uploads/images/ directory with 755 permissions.');
+        }
     }
     
-    // Check if directory is writable (don't try to chmod on shared hosting)
+    // Check if directory is writable
     if (!is_writable(IMAGES_DIR)) {
-        jsonError('Images directory is not writable. Please contact your hosting provider to set permissions on uploads/images/ directory to 755.');
+        // Try a test write to see if we can actually write (sometimes is_writable() is wrong)
+        $testFile = IMAGES_DIR . '.test_write_' . time();
+        $testWrite = @file_put_contents($testFile, 'test');
+        if ($testWrite !== false) {
+            @unlink($testFile); // Clean up test file
+            // Directory is actually writable, continue
+        } else {
+            // Directory is truly not writable
+            jsonError('Images directory is not writable. Please set permissions on uploads/images/ directory to 755. Current path: ' . IMAGES_DIR);
+        }
     }
     
     // Generate unique filename
