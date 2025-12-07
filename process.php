@@ -69,8 +69,9 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) use ($errorLogFi
     ];
     
     // E_STRICT is deprecated in PHP 8.0+, so we don't include it
-    // But handle it gracefully if it appears
-    if (defined('E_STRICT') && $errno === E_STRICT) {
+    // But handle it gracefully if it appears (E_STRICT = 2048)
+    // Use the numeric value instead of the constant to avoid deprecation warning
+    if ($errno === 2048) { // E_STRICT value
         $errorType = 'E_STRICT (deprecated)';
     } else {
         $errorType = $errorTypes[$errno] ?? 'UNKNOWN';
@@ -143,14 +144,27 @@ function handleImageUpload($imageFile, $isPreview = false) {
         jsonError('Image file is too large. Maximum size is 5MB for MMS.');
     }
     
+    // Ensure images directory exists and is writable
+    if (!file_exists(IMAGES_DIR)) {
+        @mkdir(IMAGES_DIR, 0755, true);
+    }
+    if (!is_writable(IMAGES_DIR)) {
+        @chmod(IMAGES_DIR, 0755);
+    }
+    
     // Generate unique filename
     $filename = uniqid('img_', true) . '_' . time() . '.' . $fileExtension;
     $targetPath = IMAGES_DIR . $filename;
     
     // Move uploaded file
-    if (!move_uploaded_file($imageFile['tmp_name'], $targetPath)) {
-        jsonError('Failed to upload image file.');
+    if (!@move_uploaded_file($imageFile['tmp_name'], $targetPath)) {
+        $error = error_get_last();
+        $errorMsg = $error ? $error['message'] : 'Unknown error';
+        jsonError('Failed to upload image file. Check directory permissions.', $errorMsg);
     }
+    
+    // Ensure file is readable
+    @chmod($targetPath, 0644);
     
     // Generate public URL
     $baseUrl = BASE_URL;
@@ -360,7 +374,8 @@ function readCSVFile($filePath) {
         }
         
         // Read first row to determine format
-        $firstRow = fgetcsv($handle, 1000, ',');
+        // PHP 8.1+ requires explicit escape parameter
+        $firstRow = fgetcsv($handle, 1000, ',', '"', '\\');
         if (!$firstRow || count($firstRow) < 1) {
             fclose($handle);
             return $contacts;
@@ -388,7 +403,8 @@ function readCSVFile($filePath) {
             }
             
             // Read data rows
-            while (($data = fgetcsv($handle, 1000, ',')) !== false) {
+            // PHP 8.1+ requires explicit escape parameter
+            while (($data = fgetcsv($handle, 1000, ',', '"', '\\')) !== false) {
                 if (count($data) === count($headers)) {
                     $contact = array_combine($headers, $data);
                     
@@ -432,7 +448,8 @@ function readCSVFile($filePath) {
             }
             
             // Read remaining rows
-            while (($data = fgetcsv($handle, 1000, ',')) !== false) {
+            // PHP 8.1+ requires explicit escape parameter
+            while (($data = fgetcsv($handle, 1000, ',', '"', '\\')) !== false) {
                 if (!empty($data[0])) {
                     $phone = trim($data[0]);
                     $phone = preg_replace('/[^\d+]/', '', $phone);
