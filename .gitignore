@@ -1,0 +1,38 @@
+# Sensitive configuration files
+config.php
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+temp/
+*.tmp
+
+# Uploads (user data)
+uploads/
+!uploads/.gitkeep
+
+# Vendor dependencies (install via composer)
+vendor/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# PHP
+*.cache
+.phpunit.result.cache
+
+# Environment files
+.env
+.env.local
+
