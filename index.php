@@ -1302,8 +1302,14 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                     <div class="form-group">
                         <label for="messageTemplate">Message Template</label>
                         <textarea id="messageTemplate" name="messageTemplate" placeholder="Hello @name, please visit: @link" required></textarea>
+                        <div style="margin-top: 0.75rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: normal; margin-bottom: 0;">
+                                <input type="checkbox" id="includeStopText" name="includeStopText" checked style="width: auto; margin: 0;">
+                                <span>Automatically add "Reply STOP to stop" text</span>
+                            </label>
+                        </div>
                         <div class="char-counter">
-                            <span id="charCount">0</span> characters (including auto-added STOP text)
+                            <span id="charCount">0</span> characters<span id="stopTextNote"> (including auto-added STOP text)</span>
                         </div>
                     </div>
 
@@ -1471,6 +1477,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             
             // Character counter
             document.getElementById('messageTemplate').addEventListener('input', updateCharCounter);
+            document.getElementById('includeStopText').addEventListener('change', updateCharCounter);
             
             // Image preview
             document.getElementById('imageFile').addEventListener('change', handleImagePreview);
@@ -1495,9 +1502,18 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 
         function updateCharCounter() {
             const template = document.getElementById('messageTemplate').value;
+            const includeStopText = document.getElementById('includeStopText').checked;
             const stopText = '\n\nReply STOP to stop';
-            const totalLength = template.length + stopText.length;
+            const totalLength = includeStopText ? template.length + stopText.length : template.length;
             document.getElementById('charCount').textContent = totalLength;
+            
+            // Update the note about STOP text
+            const stopTextNote = document.getElementById('stopTextNote');
+            if (includeStopText) {
+                stopTextNote.textContent = ' (including auto-added STOP text)';
+            } else {
+                stopTextNote.textContent = '';
+            }
             
             // Color code based on SMS length limits
             const charCountElement = document.getElementById('charCount');
@@ -1558,6 +1574,9 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             formData.append('csvFile', csvFile);
             formData.append('messageTemplate', messageTemplate);
             formData.append('baseUrl', baseUrl);
+            if (document.getElementById('includeStopText').checked) {
+                formData.append('includeStopText', 'on');
+            }
             if (imageFile) {
                 formData.append('imageFile', imageFile);
             }

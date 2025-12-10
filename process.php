@@ -265,8 +265,11 @@ function handlePreview() {
             jsonError('No valid contacts found in CSV. Please ensure your CSV has a "phone" column with phone numbers, or contains just phone numbers (one per row).');
         }
         
+        // Get includeStopText option
+        $includeStopText = isset($_POST['includeStopText']) && $_POST['includeStopText'] === 'on';
+        
         // Generate preview
-        $preview = generatePreview($contacts, $messageTemplate, $baseUrl, $imageUrl);
+        $preview = generatePreview($contacts, $messageTemplate, $baseUrl, $imageUrl, $includeStopText);
         
         // Return success
         echo json_encode([
@@ -296,6 +299,7 @@ function handleSend() {
         $scheduleTime = $_POST['scheduleTime'] ?? '';
         $maxRetries = intval($_POST['maxRetries'] ?? 3);
         $retryDelay = intval($_POST['retryDelay'] ?? 5);
+        $includeStopText = isset($_POST['includeStopText']) && $_POST['includeStopText'] === 'on';
         
         // Validate required fields
         if (!isset($_FILES['csvFile']) || $_FILES['csvFile']['error'] !== UPLOAD_ERR_OK) {
@@ -331,6 +335,7 @@ function handleSend() {
                 'delayMax' => intval($_POST['delayMax'] ?? 3),
                 'batchSize' => intval($_POST['batchSize'] ?? 50),
                 'batchPause' => intval($_POST['batchPause'] ?? 2),
+                'includeStopText' => $includeStopText,
                 'status' => 'scheduled',
                 'created' => time()
             ];
@@ -383,7 +388,7 @@ function handleSend() {
         }
         
         // Send SMS messages with real-time progress updates
-        $result = sendBulkSMSWithProgress($contacts, $messageTemplate, $baseUrl, $fromNumber, $twilio_sid, $twilio_token, $campaignName, $maxRetries, $retryDelay, $imageUrl);
+        $result = sendBulkSMSWithProgress($contacts, $messageTemplate, $baseUrl, $fromNumber, $twilio_sid, $twilio_token, $campaignName, $maxRetries, $retryDelay, $imageUrl, $includeStopText);
         
         echo json_encode($result);
     } catch (Exception $e) {
@@ -508,7 +513,7 @@ function readCSVFile($filePath) {
     return $contacts;
 }
 
-function generatePreview($contacts, $template, $baseUrl, $imageUrl = null) {
+function generatePreview($contacts, $template, $baseUrl, $imageUrl = null, $includeStopText = true) {
     $preview = '<div style="background: #f8fafc; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">';
     $preview .= '<h3 style="color: #1e40af; margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">';
     $preview .= 'Sample Messages (' . min(3, count($contacts)) . ' of ' . count($contacts) . ' contacts)';
@@ -526,7 +531,7 @@ function generatePreview($contacts, $template, $baseUrl, $imageUrl = null) {
     foreach ($contacts as $contact) {
         if ($count >= 3) break;
         
-        $message = replacePlaceholders($template, $contact, $baseUrl);
+        $message = replacePlaceholders($template, $contact, $baseUrl, $includeStopText);
         
         $preview .= '<div style="margin-bottom: 1.5rem; padding: 1.25rem; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">';
         
@@ -569,7 +574,7 @@ function generatePreview($contacts, $template, $baseUrl, $imageUrl = null) {
     return $preview;
 }
 
-function replacePlaceholders($template, $contact, $baseUrl) {
+function replacePlaceholders($template, $contact, $baseUrl, $includeStopText = true) {
     $replacements = [
         '@name' => $contact['name'] ?? '',
         '@id' => $contact['id'] ?? '',
@@ -579,8 +584,8 @@ function replacePlaceholders($template, $contact, $baseUrl) {
     
     $message = str_replace(array_keys($replacements), array_values($replacements), $template);
     
-    // Automatically add STOP text if not already present
-    if (stripos($message, 'stop') === false && stripos($message, 'unsubscribe') === false) {
+    // Automatically add STOP text if not already present and if includeStopText is true
+    if ($includeStopText && stripos($message, 'stop') === false && stripos($message, 'unsubscribe') === false) {
         $message .= "\n\nReply STOP to stop";
     }
     
@@ -720,7 +725,8 @@ function sendBulkSMS($contacts, $messageTemplate, $baseUrl, $fromNumber, $twilio
         file_put_contents(TEMP_DIR . $processId . '.json', json_encode($progressData));
         
         // Replace placeholders
-        $message = replacePlaceholders($messageTemplate, $contact, $baseUrl);
+        $includeStopText = isset($_POST['includeStopText']) && $_POST['includeStopText'] === 'on';
+        $message = replacePlaceholders($messageTemplate, $contact, $baseUrl, $includeStopText);
         
         // Send SMS (imageUrl would need to be passed to this function if using old sendBulkSMS)
         $result = sendTwilioSMS($twilioSid, $twilioToken, $fromNumber, $contact['phone'], $message);
@@ -805,7 +811,7 @@ function sendBulkSMS($contacts, $messageTemplate, $baseUrl, $fromNumber, $twilio
     ];
 }
 
-function sendBulkSMSWithProgress($contacts, $messageTemplate, $baseUrl, $fromNumber, $twilioSid, $twilioToken, $campaignName = '', $maxRetries = 3, $retryDelay = 5, $imageUrl = null) {
+function sendBulkSMSWithProgress($contacts, $messageTemplate, $baseUrl, $fromNumber, $twilioSid, $twilioToken, $campaignName = '', $maxRetries = 3, $retryDelay = 5, $imageUrl = null, $includeStopText = true) {
     // Set unlimited execution time for SMS sending
     set_time_limit(0);
     ini_set('max_execution_time', 0);
@@ -884,7 +890,7 @@ function sendBulkSMSWithProgress($contacts, $messageTemplate, $baseUrl, $fromNum
         flush();
         
         // Process batch with concurrent requests
-        $batchResults = sendConcurrentSMS($batch, $messageTemplate, $baseUrl, $fromNumber, $twilioSid, $twilioToken, $maxConcurrent, $imageUrl);
+        $batchResults = sendConcurrentSMS($batch, $messageTemplate, $baseUrl, $fromNumber, $twilioSid, $twilioToken, $maxConcurrent, $imageUrl, $includeStopText);
         
         // Process results
         foreach ($batchResults as $result) {
@@ -970,7 +976,7 @@ function sendBulkSMSWithProgress($contacts, $messageTemplate, $baseUrl, $fromNum
     ];
 }
 
-function sendConcurrentSMS($contacts, $messageTemplate, $baseUrl, $fromNumber, $twilioSid, $twilioToken, $maxConcurrent = 25, $imageUrl = null) {
+function sendConcurrentSMS($contacts, $messageTemplate, $baseUrl, $fromNumber, $twilioSid, $twilioToken, $maxConcurrent = 25, $imageUrl = null, $includeStopText = true) {
     $results = [];
     $mh = curl_multi_init();
     $handles = [];
@@ -1000,7 +1006,7 @@ function sendConcurrentSMS($contacts, $messageTemplate, $baseUrl, $fromNumber, $
         
         // Create cURL handles for each contact in the chunk
         foreach ($chunk as $contact) {
-            $message = replacePlaceholders($messageTemplate, $contact, $baseUrl);
+            $message = replacePlaceholders($messageTemplate, $contact, $baseUrl, $includeStopText);
             
             $data = [
                 'From' => $fromNumber,
