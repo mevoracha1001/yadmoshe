@@ -399,16 +399,50 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         }
         
         .header {
-            background: var(--surface);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
             padding: 1rem 2rem;
-            border-bottom: 1px solid var(--border);
+            margin: 1rem 1.5rem 0 1.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: var(--shadow-card);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
+                        0 0 0 1px rgba(255, 255, 255, 0.8) inset,
+                        0 2px 8px rgba(255, 255, 255, 0.5) inset;
             position: sticky;
-            top: 0;
+            top: 1rem;
             z-index: 100;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(100% - 3rem);
+            margin-left: 1.5rem;
+            margin-right: 1.5rem;
+        }
+        
+        .header.scrolled {
+            width: auto;
+            margin-left: auto;
+            margin-right: 1.5rem;
+            padding: 0.75rem 1.25rem;
+            max-width: fit-content;
+        }
+        
+        .header.scrolled .header-content {
+            display: none;
+        }
+        
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .header.scrolled .logout-btn {
+            margin: 0;
         }
         
         .header h1 {
@@ -1396,8 +1430,8 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     </style>
 </head>
 <body>
-    <div class="header">
-        <div>
+    <div class="header" id="mainHeader">
+        <div class="header-content">
             <h1>Yad Moshe</h1>
             <div class="subtitle">SMS Campaign Management System</div>
         </div>
@@ -1580,7 +1614,29 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         document.addEventListener('DOMContentLoaded', function() {
             initializeEventListeners();
             updateCharCounter();
+            initializeHeaderScroll();
         });
+        
+        // Header scroll behavior
+        function initializeHeaderScroll() {
+            const header = document.getElementById('mainHeader');
+            if (!header) return;
+            
+            let lastScrollTop = 0;
+            const scrollThreshold = 100; // Scroll distance before header shrinks
+            
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                
+                if (scrollTop > scrollThreshold) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+                
+                lastScrollTop = scrollTop;
+            }, false);
+        }
 
         function initializeEventListeners() {
             // Form submission
