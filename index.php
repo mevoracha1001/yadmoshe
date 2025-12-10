@@ -77,25 +77,111 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                     box-sizing: border-box;
                 }
                 
+                html, body {
+                    height: 100%;
+                    margin: 0;
+                    padding: 0;
+                    overflow: hidden;
+                }
+                
                 body { 
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    background: var(--bg);
-                    min-height: 100vh;
+                    background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 50%, #e8f0fe 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     color: var(--text);
                     line-height: 1.6;
                     -webkit-font-smoothing: antialiased;
                     -moz-osx-font-smoothing: grayscale;
+                    position: relative;
+                    overflow: hidden;
+                }
+                
+                body::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: 
+                        radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+                    pointer-events: none;
+                }
+                
+                .login-wrapper {
+                    position: relative;
+                    width: 100%;
+                    max-width: 400px;
+                    margin: 0 auto;
+                }
+                
+                .login-wrapper::before,
+                .login-wrapper::after {
+                    content: '';
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 20px;
+                    background: rgba(255, 255, 255, 0.4);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.5);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+                    pointer-events: none;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                
+                .login-wrapper::before {
+                    top: 0;
+                    left: 4px;
+                    z-index: 0;
+                    opacity: 0.2;
+                    transform: translateX(0) scale(0.98);
+                }
+                
+                .login-wrapper::after {
+                    top: 0;
+                    left: 8px;
+                    z-index: -1;
+                    opacity: 0.1;
+                    transform: translateX(0) scale(0.96);
+                }
+                
+                .login-wrapper:hover::before {
+                    left: 8px;
+                    opacity: 0.6;
+                    transform: translateX(0) scale(1);
+                }
+                
+                .login-wrapper:hover::after {
+                    left: 16px;
+                    opacity: 0.4;
+                    transform: translateX(0) scale(1);
                 }
                 
                 .login-container {
-                    background: var(--card-bg);
-                    padding: 2rem;
-                    border-radius: 4px;
-                    box-shadow: var(--shadow);
+                    background: rgba(255, 255, 255, 0.7);
+                    backdrop-filter: blur(20px) saturate(180%);
+                    -webkit-backdrop-filter: blur(20px) saturate(180%);
+                    padding: 2.5rem;
+                    border-radius: 20px;
                     width: 100%;
-                    max-width: 400px;
-                    margin: 4rem auto;
-                    border: 1px solid var(--border);
+                    border: 1px solid rgba(255, 255, 255, 0.6);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
+                                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+                    position: relative;
+                    z-index: 1;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                
+                .login-wrapper:hover .login-container {
+                    transform: translateY(-2px);
+                    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15),
+                                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
                 }
                 
                 .brand-header {
@@ -104,7 +190,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                 }
                 
                 .brand-header h1 {
-                    color: var(--primary);
+                    color: #1e293b;
                     font-size: 2.5rem;
                     font-weight: 700;
                     margin-bottom: 0.5rem;
@@ -112,7 +198,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                 }
                 
                 .brand-header p {
-                    color: var(--text-light);
+                    color: #64748b;
                     font-size: 1.125rem;
                     font-weight: 400;
                 }
@@ -125,52 +211,74 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                     display: block;
                     margin-bottom: 0.75rem;
                     font-weight: 600;
-                    color: var(--text);
-                    font-size: 0.95rem;
-                    letter-spacing: 0.025em;
+                    color: #334155;
+                    font-size: 0.875rem;
+                    letter-spacing: 0.05em;
                     text-transform: uppercase;
                 }
                 
                 input[type="text"], input[type="password"] {
                     width: 100%;
-                    padding: 0.75rem;
-                    border: 1px solid var(--border);
-                    border-radius: 4px;
+                    padding: 0.875rem 1rem;
+                    border: 1px solid rgba(148, 163, 184, 0.3);
+                    border-radius: 10px;
                     font-size: 1rem;
-                    background: #ffffff;
+                    background: rgba(255, 255, 255, 0.8);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    color: #1e293b;
+                    transition: all 0.2s ease;
+                }
+                
+                input[type="text"]::placeholder, input[type="password"]::placeholder {
+                    color: #94a3b8;
                 }
                 
                 input[type="text"]:focus, input[type="password"]:focus {
                     outline: none;
-                    border-color: var(--primary);
-                    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+                    border-color: #3682de;
+                    background: rgba(255, 255, 255, 0.95);
+                    box-shadow: 0 0 0 3px rgba(54, 130, 222, 0.1),
+                                0 2px 8px rgba(0, 0, 0, 0.08);
                 }
                 
                 .btn {
                     width: 100%;
-                    padding: 0.75rem 1rem;
-                    background: var(--primary);
+                    padding: 0.875rem 1rem;
+                    background: #3682de;
                     color: white;
                     border: none;
-                    border-radius: 4px;
+                    border-radius: 10px;
                     font-size: 1rem;
-                    font-weight: 500;
+                    font-weight: 600;
                     cursor: pointer;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 2px 8px rgba(54, 130, 222, 0.25);
                 }
                 
                 .btn:hover {
-                    background: var(--primary-hover);
+                    background: #2b6fc7;
+                    box-shadow: 0 4px 12px rgba(54, 130, 222, 0.35);
+                    transform: translateY(-1px);
+                }
+                
+                .btn:active {
+                    transform: translateY(0);
+                    box-shadow: 0 2px 6px rgba(54, 130, 222, 0.25);
                 }
                 
                 .error {
-                    background: #fef2f2;
-                    color: var(--danger);
+                    background: rgba(254, 242, 242, 0.9);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    color: #dc2626;
                     padding: 1rem;
-                    border-radius: 4px;
+                    border-radius: 10px;
                     margin-bottom: 1.5rem;
-                    border: 1px solid #fecaca;
-                    border-left: 4px solid var(--danger);
+                    border: 1px solid rgba(254, 202, 202, 0.5);
+                    border-left: 4px solid #dc2626;
                     font-weight: 500;
+                    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
                 }
                 
                 .security-notice {
@@ -185,11 +293,12 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             </style>
         </head>
         <body>
-            <div class="login-container">
-                <div class="brand-header">
-                    <h1>Yad Moshe</h1>
-                    <p>SMS Campaign Management System</p>
-                </div>
+            <div class="login-wrapper">
+                <div class="login-container">
+                    <div class="brand-header">
+                        <h1>Yad Moshe</h1>
+                        <p>SMS Campaign Management System</p>
+                    </div>
                 
                 <?php if (isset($error)): ?>
                     <div class="error">
@@ -211,9 +320,6 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                     
                     <button type="submit" class="btn">Access System</button>
                 </form>
-                
-                <div class="security-notice">
-                    <strong>Secure Access:</strong> Your credentials are used only for this session and are not stored permanently.
                 </div>
             </div>
         </body>
