@@ -403,7 +403,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             backdrop-filter: blur(40px) saturate(200%);
             -webkit-backdrop-filter: blur(40px) saturate(200%);
             padding: 1rem 2rem;
-            margin: 1rem 1.5rem 0 1.5rem;
+            margin: 1.5rem;
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.6);
             display: flex;
@@ -413,12 +413,10 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                         0 0 0 1px rgba(255, 255, 255, 0.8) inset,
                         0 2px 8px rgba(255, 255, 255, 0.5) inset;
             position: sticky;
-            top: 1rem;
+            top: 1.5rem;
             z-index: 100;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             width: calc(100% - 3rem);
-            margin-left: 1.5rem;
-            margin-right: 1.5rem;
         }
         
         .header.scrolled {
