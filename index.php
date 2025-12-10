@@ -461,6 +461,142 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             opacity: 0.8;
         }
         
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .settings-container {
+            position: relative;
+        }
+        
+        .settings-btn {
+            background: var(--surface);
+            color: var(--text);
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+        
+        .settings-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+        }
+        
+        /* Settings Modal Overlay */
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .settings-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .settings-menu {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            margin: 0;
+        }
+        
+        .settings-overlay.active .settings-menu {
+            transform: scale(1);
+        }
+        
+        .settings-menu-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg);
+        }
+        
+        .settings-menu-header h3 {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .settings-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+        
+        .settings-close:hover {
+            color: var(--text);
+        }
+        
+        .settings-menu-content {
+            padding: 1.25rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .settings-menu-content .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .settings-menu-content .form-group:last-of-type {
+            margin-bottom: 0;
+        }
+        
+        .settings-menu-footer {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        
         .logout-btn {
             background: var(--surface);
             color: var(--danger);
@@ -473,12 +609,43 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             text-decoration: none;
             transition: all 0.2s ease;
             box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logout-icon {
+            display: none;
+        }
+        
+        .logout-text {
+            display: inline;
+        }
+        
+        .header.scrolled .logout-btn {
+            margin: 0;
+            padding: 0.5rem;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+        }
+        
+        .header.scrolled .logout-icon {
+            display: block;
+        }
+        
+        .header.scrolled .logout-text {
+            display: none;
         }
         
         .logout-btn:hover {
             background: var(--danger);
             color: white;
             box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+        }
+        
+        .header.scrolled .logout-btn:hover {
             transform: translateY(-1px);
         }
         
@@ -1414,6 +1581,24 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                 text-align: center;
             }
             
+            .header-content {
+                align-items: center;
+                text-align: center;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .settings-menu {
+                max-width: 90vw;
+            }
+            
+            .settings-overlay {
+                padding: 0.5rem;
+            }
+            
             .container {
                 padding: 0 1rem;
             }
@@ -1435,7 +1620,49 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             <h1>Yad Moshe</h1>
             <div class="subtitle">SMS Campaign Management System</div>
         </div>
-        <a href="?logout=1" class="logout-btn">Sign Out</a>
+        <div class="header-actions">
+            <div class="settings-container">
+                <button class="settings-btn" id="settingsBtn" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+            </div>
+            <a href="?logout=1" class="logout-btn" title="Sign Out">
+                <svg class="logout-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span class="logout-text">Sign Out</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Settings Modal Overlay -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-menu" id="settingsMenu">
+            <div class="settings-menu-header">
+                <h3>Settings</h3>
+                <button class="settings-close" id="settingsClose">&times;</button>
+            </div>
+            <div class="settings-menu-content">
+                <div class="form-group">
+                    <label for="settingsBatchSize">Concurrent Batch Size</label>
+                    <input type="number" id="settingsBatchSize" name="settingsBatchSize" placeholder="30" value="30" min="10" max="500" required>
+                    <small>Number of contacts to process in each concurrent batch (10-500)</small>
+                </div>
+                <div class="form-group">
+                    <label for="settingsMaxConcurrent">Max Concurrent Requests</label>
+                    <input type="number" id="settingsMaxConcurrent" name="settingsMaxConcurrent" placeholder="15" value="15" min="1" max="50" required>
+                    <small>Maximum SMS requests to send simultaneously (1-50)</small>
+                </div>
+                <div class="settings-menu-footer">
+                    <button type="button" class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="container">
@@ -1489,19 +1716,6 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="batchSize">Concurrent Batch Size</label>
-                        <input type="number" id="batchSize" name="batchSize" placeholder="100" value="100" min="10" max="500" required>
-                        <small>Number of contacts to process in each concurrent batch (10-500)</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="maxConcurrent">Max Concurrent Requests</label>
-                        <input type="number" id="maxConcurrent" name="maxConcurrent" placeholder="25" value="25" min="1" max="50" required>
-                        <small>Maximum SMS requests to send simultaneously (1-50)</small>
-                    </div>
-                </div>
 
 
                 <div class="button-group">
@@ -1673,8 +1887,90 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             document.getElementById('exportLogsBtn').addEventListener('click', exportLogs);
             document.getElementById('autoScrollToggle').addEventListener('change', toggleAutoScroll);
             
+            // Settings menu
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsOverlay = document.getElementById('settingsOverlay');
+            const settingsMenu = document.getElementById('settingsMenu');
+            const settingsClose = document.getElementById('settingsClose');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
             
+            function openSettings() {
+                if (settingsOverlay) {
+                    settingsOverlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
             
+            function closeSettings() {
+                if (settingsOverlay) {
+                    settingsOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
+            
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openSettings();
+                });
+            }
+            
+            if (settingsClose) {
+                settingsClose.addEventListener('click', function() {
+                    closeSettings();
+                });
+            }
+            
+            if (saveSettingsBtn) {
+                saveSettingsBtn.addEventListener('click', function() {
+                    const batchSize = document.getElementById('settingsBatchSize').value;
+                    const maxConcurrent = document.getElementById('settingsMaxConcurrent').value;
+                    
+                    // Validate
+                    if (!batchSize || batchSize < 10 || batchSize > 500) {
+                        showAlert('Batch size must be between 10 and 500', 'error');
+                        return;
+                    }
+                    if (!maxConcurrent || maxConcurrent < 1 || maxConcurrent > 50) {
+                        showAlert('Max concurrent requests must be between 1 and 50', 'error');
+                        return;
+                    }
+                    
+                    // Save to localStorage
+                    localStorage.setItem('batchSize', batchSize);
+                    localStorage.setItem('maxConcurrent', maxConcurrent);
+                    
+                    // Close menu
+                    closeSettings();
+                    showAlert('Settings saved successfully', 'success');
+                });
+            }
+            
+            // Close settings menu when clicking on overlay background
+            if (settingsOverlay) {
+                settingsOverlay.addEventListener('click', function(e) {
+                    if (e.target === settingsOverlay) {
+                        closeSettings();
+                    }
+                });
+            }
+            
+            // Close on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && settingsOverlay && settingsOverlay.classList.contains('active')) {
+                    closeSettings();
+                }
+            });
+            
+            // Load saved settings from localStorage
+            const savedBatchSize = localStorage.getItem('batchSize');
+            const savedMaxConcurrent = localStorage.getItem('maxConcurrent');
+            if (savedBatchSize) {
+                document.getElementById('settingsBatchSize').value = savedBatchSize;
+            }
+            if (savedMaxConcurrent) {
+                document.getElementById('settingsMaxConcurrent').value = savedMaxConcurrent;
+            }
             
             // Initialize data
             initializeNotifications();
@@ -1792,8 +2088,8 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             const messageTemplate = document.getElementById('messageTemplate').value;
             const baseUrl = document.getElementById('baseUrl').value;
             const fromNumber = document.getElementById('fromNumber').value;
-            const batchSize = document.getElementById('batchSize').value || 100;
-            const maxConcurrent = document.getElementById('maxConcurrent').value || 25;
+            const batchSize = document.getElementById('settingsBatchSize').value || 30;
+            const maxConcurrent = document.getElementById('settingsMaxConcurrent').value || 15;
 
             if (!messageTemplate || !fromNumber) {
                 showAlert('Please enter a message template and sender phone number for testing.', 'error');
@@ -2249,6 +2545,12 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             
             const formData = new FormData(document.getElementById('smsForm'));
             formData.append('action', 'send');
+            
+            // Get concurrent settings from settings menu
+            const batchSize = document.getElementById('settingsBatchSize').value || 30;
+            const maxConcurrent = document.getElementById('settingsMaxConcurrent').value || 15;
+            formData.append('batchSize', batchSize);
+            formData.append('maxConcurrent', maxConcurrent);
             
             // Image file is already included in formData if selected
             
