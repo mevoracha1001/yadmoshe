@@ -483,8 +483,15 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 0.5rem;
             width: 36px;
             height: 36px;
+            overflow: hidden;
+        }
+        
+        .settings-text {
+            display: none;
+            white-space: nowrap;
         }
         
         .settings-btn:hover {
@@ -492,6 +499,24 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             color: var(--primary);
             box-shadow: var(--shadow-hover);
             transform: translateY(-1px);
+        }
+        
+        .header.scrolled .settings-btn {
+            width: 36px;
+            padding: 0.5rem;
+        }
+        
+        .header.scrolled .settings-text {
+            display: none;
+        }
+        
+        .header.scrolled .settings-btn:hover {
+            width: auto;
+            padding: 0.5rem 1rem;
+        }
+        
+        .header.scrolled .settings-btn:hover .settings-text {
+            display: inline;
         }
         
         /* Settings Modal Overlay */
@@ -626,6 +651,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             width: 36px;
             height: 36px;
             justify-content: center;
+            overflow: hidden;
         }
         
         .header.scrolled .logout-icon {
@@ -644,7 +670,13 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         }
         
         .header.scrolled .logout-btn:hover {
+            width: auto;
+            padding: 0.5rem 1rem;
             transform: translateY(-1px);
+        }
+        
+        .header.scrolled .logout-btn:hover .logout-text {
+            display: inline;
         }
         
         .container {
@@ -1680,6 +1712,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                         <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
                     </svg>
+                    <span class="settings-text">Settings</span>
                 </button>
             </div>
             <a href="?logout=1" class="logout-btn" title="Sign Out">
