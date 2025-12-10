@@ -1953,18 +1953,36 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             
             let lastScrollTop = 0;
             const scrollThreshold = 100; // Scroll distance before header shrinks
+            const scrollThresholdRemove = 50; // Scroll distance to remove scrolled state (hysteresis)
+            let isScrolled = false;
+            let ticking = false;
             
-            window.addEventListener('scroll', function() {
+            function updateHeader() {
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollDirection = scrollTop > lastScrollTop ? 'down' : 'up';
                 
-                if (scrollTop > scrollThreshold) {
+                // Use hysteresis to prevent rapid toggling
+                if (!isScrolled && scrollTop >= scrollThreshold) {
                     header.classList.add('scrolled');
-                } else {
+                    isScrolled = true;
+                } else if (isScrolled && scrollTop <= scrollThresholdRemove) {
                     header.classList.remove('scrolled');
+                    isScrolled = false;
                 }
                 
-                lastScrollTop = scrollTop;
-            }, false);
+                lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+                ticking = false;
+            }
+            
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(updateHeader);
+                    ticking = true;
+                }
+            }, { passive: true });
+            
+            // Initial check
+            updateHeader();
         }
 
         function initializeEventListeners() {
