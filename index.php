@@ -1770,7 +1770,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 
                 <div class="form-row">
                     <div class="form-group image-upload-group">
-                        <label for="imageFile">Image/Photo (Optional - for MMS)</label>
+                        <label for="imageFile">Upload Attachment</label>
                         <div class="file-upload-wrapper">
                             <input type="file" id="imageFile" name="imageFile" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
                             <label for="imageFile" class="file-upload-label">
