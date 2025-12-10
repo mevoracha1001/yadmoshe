@@ -399,19 +399,19 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         }
         
         .header {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(40px) saturate(200%);
-            -webkit-backdrop-filter: blur(40px) saturate(200%);
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(60px) saturate(180%);
+            -webkit-backdrop-filter: blur(60px) saturate(180%);
             padding: 1rem 2rem;
             margin: 1.5rem;
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
-                        0 0 0 1px rgba(255, 255, 255, 0.8) inset,
-                        0 2px 8px rgba(255, 255, 255, 0.5) inset;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08),
+                        0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+                        0 2px 8px rgba(255, 255, 255, 0.1) inset;
             position: sticky;
             top: 1.5rem;
             z-index: 100;
@@ -425,6 +425,14 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             margin-right: 1.5rem;
             padding: 0.75rem 1.25rem;
             max-width: fit-content;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(120px) saturate(180%);
+            -webkit-backdrop-filter: blur(120px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15),
+                        0 4px 16px rgba(0, 0, 0, 0.1),
+                        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+                        0 2px 8px rgba(255, 255, 255, 0.03) inset;
         }
         
         .header.scrolled .header-content {
