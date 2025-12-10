@@ -796,15 +796,66 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         }
 
         input[type="file"] {
-            padding: 0.75rem;
-            border-style: solid;
-            background: var(--surface);
-            cursor: pointer;
+            position: absolute;
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            z-index: -1;
         }
-
-        input[type="file"]:hover {
+        
+        .file-upload-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .image-upload-group .file-upload-wrapper {
+            max-width: 50%;
+        }
+        
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--surface);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            min-height: 48px;
+        }
+        
+        .file-upload-label:hover {
             border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        
+        .file-upload-label svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        
+        .file-name {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
             background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            color: var(--text);
+            display: none;
+        }
+        
+        .file-name.show {
+            display: block;
         }
 
         input[type="number"] {
@@ -1347,6 +1398,10 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                 padding: 0 0.75rem;
                 margin: 1rem 0;
             }
+            
+            .image-upload-group .file-upload-wrapper {
+                max-width: 100%;
+            }
 
             .form-row {
                 grid-template-columns: 1fr;
@@ -1674,7 +1729,18 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="csvFile">Contact List (CSV File)</label>
-                        <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
+                            <label for="csvFile" class="file-upload-label">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <span id="csvFileLabel">Choose CSV File</span>
+                            </label>
+                            <div class="file-name" id="csvFileName"></div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1687,14 +1753,14 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                     <div class="form-group">
                         <label for="messageTemplate">Message Template</label>
                         <textarea id="messageTemplate" name="messageTemplate" placeholder="Hello @name, please visit: @link" required></textarea>
-                        <div style="margin-top: 0.75rem;">
+                        <div style="margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: normal; margin-bottom: 0;">
                                 <input type="checkbox" id="includeStopText" name="includeStopText" checked style="width: auto; margin: 0;">
                                 <span>Automatically add "Reply STOP to stop" text</span>
                             </label>
-                        </div>
-                        <div class="char-counter">
-                            <span id="charCount">0</span> characters<span id="stopTextNote"> (including auto-added STOP text)</span>
+                            <div class="char-counter" style="margin: 0;">
+                                <span id="charCount">0</span> characters<span id="stopTextNote"> (including auto-added STOP text)</span>
+                            </div>
                         </div>
                     </div>
 
@@ -1705,10 +1771,20 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
+                    <div class="form-group image-upload-group">
                         <label for="imageFile">Image/Photo (Optional - for MMS)</label>
-                        <input type="file" id="imageFile" name="imageFile" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
-                        <small>Upload an image to send as MMS along with the text message. Each recipient will receive a separate message with the image.</small>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="imageFile" name="imageFile" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                            <label for="imageFile" class="file-upload-label">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span id="imageFileLabel">Choose Image</span>
+                            </label>
+                            <div class="file-name" id="imageFileName"></div>
+                        </div>
                         <div id="imagePreview" style="margin-top: 1rem; display: none;">
                             <img id="imagePreviewImg" src="" alt="Preview" style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid var(--border);">
                             <button type="button" id="removeImageBtn" class="btn btn-danger btn-sm" style="margin-top: 0.5rem;">Remove Image</button>
@@ -1873,6 +1949,21 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             document.getElementById('messageTemplate').addEventListener('input', updateCharCounter);
             document.getElementById('includeStopText').addEventListener('change', updateCharCounter);
             
+            // File upload handlers
+            document.getElementById('csvFile').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                const fileNameDiv = document.getElementById('csvFileName');
+                const fileLabel = document.getElementById('csvFileLabel');
+                if (file) {
+                    fileNameDiv.textContent = `Selected: ${file.name} (${formatBytes(file.size)})`;
+                    fileNameDiv.classList.add('show');
+                    fileLabel.textContent = 'Change CSV File';
+                } else {
+                    fileNameDiv.classList.remove('show');
+                    fileLabel.textContent = 'Choose CSV File';
+                }
+            });
+            
             // Image preview
             document.getElementById('imageFile').addEventListener('change', handleImagePreview);
             document.getElementById('removeImageBtn').addEventListener('click', removeImage);
@@ -2004,11 +2095,16 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 
         function handleImagePreview(e) {
             const file = e.target.files[0];
+            const fileNameDiv = document.getElementById('imageFileName');
+            const fileLabel = document.getElementById('imageFileLabel');
+            
             if (file) {
                 // Validate file type
                 if (!file.type.match('image.*')) {
                     showAlert('Please select a valid image file (JPEG, PNG, GIF, or WebP).', 'error');
                     e.target.value = '';
+                    fileNameDiv.classList.remove('show');
+                    fileLabel.textContent = 'Choose Image';
                     return;
                 }
                 
@@ -2016,8 +2112,15 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                 if (file.size > 5 * 1024 * 1024) {
                     showAlert('Image file is too large. Maximum size is 5MB for MMS.', 'error');
                     e.target.value = '';
+                    fileNameDiv.classList.remove('show');
+                    fileLabel.textContent = 'Choose Image';
                     return;
                 }
+                
+                // Update file name display
+                fileNameDiv.textContent = `Selected: ${file.name} (${formatBytes(file.size)})`;
+                fileNameDiv.classList.add('show');
+                fileLabel.textContent = 'Change Image';
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -2029,7 +2132,13 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         }
 
         function removeImage() {
-            document.getElementById('imageFile').value = '';
+            const imageFile = document.getElementById('imageFile');
+            const fileNameDiv = document.getElementById('imageFileName');
+            const fileLabel = document.getElementById('imageFileLabel');
+            
+            imageFile.value = '';
+            fileNameDiv.classList.remove('show');
+            fileLabel.textContent = 'Choose Image';
             document.getElementById('imagePreview').style.display = 'none';
             document.getElementById('imagePreviewImg').src = '';
         }
