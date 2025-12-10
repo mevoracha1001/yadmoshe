@@ -374,12 +374,28 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 50%, #e8f0fe 100%);
             min-height: 100vh;
             color: var(--text);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
         
         .header {
@@ -436,6 +452,8 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             width: 100%;
             margin: 1.5rem 0;
             padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
         }
         
         .welcome-section {
