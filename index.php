@@ -3222,6 +3222,55 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             }
         }
         
+        /**
+         * Format phone number to US format (+1XXXXXXXXXX)
+         * Automatically adds +1 if missing, or replaces existing country code with +1
+         * 
+         * @param {string} phone The phone number to format
+         * @returns {string|null} Formatted phone number in +1XXXXXXXXXX format, or null if invalid
+         */
+        function formatPhoneToUS(phone) {
+            if (!phone) {
+                return null;
+            }
+            
+            // Check if already in correct format
+            const trimmed = phone.trim();
+            if (/^\+1\d{10}$/.test(trimmed)) {
+                return trimmed;
+            }
+            
+            // Remove all non-digit characters
+            const digits = phone.replace(/\D/g, '');
+            
+            // Must have at least 10 digits
+            if (digits.length < 10) {
+                return null;
+            }
+            
+            // If number starts with 1 and has 11 digits, use as is (already US format)
+            if (digits.length === 11 && digits[0] === '1') {
+                return '+1' + digits.substring(1);
+            }
+            
+            // If number has 10 digits, add +1 prefix
+            if (digits.length === 10) {
+                return '+1' + digits;
+            }
+            
+            // If number has more than 11 digits, take last 10 digits and add +1
+            if (digits.length > 11) {
+                return '+1' + digits.substring(digits.length - 10);
+            }
+            
+            // If number has 11 digits but doesn't start with 1, take last 10 and add +1
+            if (digits.length === 11 && digits[0] !== '1') {
+                return '+1' + digits.substring(1);
+            }
+            
+            return null;
+        }
+        
         function parseCSV(csvText) {
             const lines = csvText.split('\n');
             const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
@@ -3236,8 +3285,13 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                     });
                     
                     if (contact.phone) {
-                        contact.status = 'valid';
-                        contacts.push(contact);
+                        // Format phone number to US format
+                        const formattedPhone = formatPhoneToUS(contact.phone);
+                        if (formattedPhone !== null) {
+                            contact.phone = formattedPhone;
+                            contact.status = 'valid';
+                            contacts.push(contact);
+                        }
                     }
                 }
             }

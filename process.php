@@ -314,6 +314,13 @@ function handleSend() {
             jsonError('Please enter a Twilio phone number');
         }
         
+        // Format sender phone number to US format
+        $formattedFromNumber = formatPhoneToUS($fromNumber);
+        if ($formattedFromNumber === null) {
+            jsonError('Invalid sender phone number format. Please enter a valid US phone number.');
+        }
+        $fromNumber = $formattedFromNumber;
+        
         // Check if campaign is scheduled
         if (!empty($scheduleTime)) {
             $scheduledTime = strtotime($scheduleTime);
@@ -396,6 +403,55 @@ function handleSend() {
     }
 }
 
+/**
+ * Format phone number to US format (+1XXXXXXXXXX)
+ * Automatically adds +1 if missing, or replaces existing country code with +1
+ * 
+ * @param string $phone The phone number to format
+ * @return string|null Formatted phone number in +1XXXXXXXXXX format, or null if invalid
+ */
+function formatPhoneToUS($phone) {
+    if (empty($phone)) {
+        return null;
+    }
+    
+    // Check if already in correct format
+    $trimmed = trim($phone);
+    if (preg_match('/^\+1\d{10}$/', $trimmed)) {
+        return $trimmed;
+    }
+    
+    // Remove all non-digit characters
+    $digits = preg_replace('/[^\d]/', '', $phone);
+    
+    // Must have at least 10 digits
+    if (strlen($digits) < 10) {
+        return null;
+    }
+    
+    // If number starts with 1 and has 11 digits, use as is (already US format)
+    if (strlen($digits) === 11 && substr($digits, 0, 1) === '1') {
+        return '+1' . substr($digits, 1);
+    }
+    
+    // If number has 10 digits, add +1 prefix
+    if (strlen($digits) === 10) {
+        return '+1' . $digits;
+    }
+    
+    // If number has more than 11 digits, take last 10 digits and add +1
+    if (strlen($digits) > 11) {
+        return '+1' . substr($digits, -10);
+    }
+    
+    // If number has 11 digits but doesn't start with 1, take last 10 and add +1
+    if (strlen($digits) === 11 && substr($digits, 0, 1) !== '1') {
+        return '+1' . substr($digits, -10);
+    }
+    
+    return null;
+}
+
 function readCSVFile($filePath) {
     $contacts = [];
     
@@ -440,19 +496,11 @@ function readCSVFile($filePath) {
                 if (count($data) === count($headers)) {
                     $contact = array_combine($headers, $data);
                     
-                    // Process phone number
+                    // Process phone number - format to US format
                     if (!empty($contact['phone'])) {
-                        $phone = trim($contact['phone']);
-                        $phone = preg_replace('/[^\d+]/', '', $phone);
-                        
-                        // Add + prefix if missing
-                        if (!preg_match('/^\+/', $phone)) {
-                            $phone = '+' . $phone;
-                        }
-                        
-                        // Basic phone validation (must have at least 10 digits)
-                        if (strlen(preg_replace('/[^\d]/', '', $phone)) >= 10) {
-                            $contact['phone'] = $phone;
+                        $formattedPhone = formatPhoneToUS($contact['phone']);
+                        if ($formattedPhone !== null) {
+                            $contact['phone'] = $formattedPhone;
                             $contacts[] = $contact;
                         }
                     }
@@ -466,34 +514,18 @@ function readCSVFile($filePath) {
         } else {
             // New logic for CSV with just phone numbers (no headers)
             // Process the first row as a phone number
-            $phone = trim($firstRow[0]);
-            $phone = preg_replace('/[^\d+]/', '', $phone);
-            
-            // Add + prefix if missing
-            if (!preg_match('/^\+/', $phone)) {
-                $phone = '+' . $phone;
-            }
-            
-            // Basic phone validation (must have at least 10 digits)
-            if (strlen(preg_replace('/[^\d]/', '', $phone)) >= 10) {
-                $contacts[] = ['phone' => $phone];
+            $formattedPhone = formatPhoneToUS($firstRow[0]);
+            if ($formattedPhone !== null) {
+                $contacts[] = ['phone' => $formattedPhone];
             }
             
             // Read remaining rows
             // PHP 8.1+ requires explicit escape parameter
             while (($data = fgetcsv($handle, 1000, ',', '"', '\\')) !== false) {
                 if (!empty($data[0])) {
-                    $phone = trim($data[0]);
-                    $phone = preg_replace('/[^\d+]/', '', $phone);
-                    
-                    // Add + prefix if missing
-                    if (!preg_match('/^\+/', $phone)) {
-                        $phone = '+' . $phone;
-                    }
-                    
-                    // Basic phone validation (must have at least 10 digits)
-                    if (strlen(preg_replace('/[^\d]/', '', $phone)) >= 10) {
-                        $contacts[] = ['phone' => $phone];
+                    $formattedPhone = formatPhoneToUS($data[0]);
+                    if ($formattedPhone !== null) {
+                        $contacts[] = ['phone' => $formattedPhone];
                     }
                 }
                 
